@@ -1,0 +1,187 @@
+---
+title: "R for finance Project 02"
+author: "Zarif"
+date: "`r Sys.Date()`"
+output:
+ html_document:
+    theme: flatly
+    toc: yes
+    toc_float:
+      collapsed: true
+    number_sections: true
+    css: mystyle.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+# Portfolio analysis 
+
+R script seems to be designed for conducting a financial analysis of a portfolio consisting of several assets. Here's a breakdown of the different sections of your script and what they contribute to the analysis: 
+
+
+# Nessary steps:
+
+-   **Setup and Libraries:** We begin by loading necessary libraries such as dplyr, quantmod, and PerformanceAnalytics for data manipulation and financial analysis.
+
+
+
+```{r, echo=FALSE}
+library(dplyr)
+library(quantmod)
+library(PerformanceAnalytics)
+```
+
+-   **Data Retrieval:** We define the tickers for the assets of The Procter & Gamble Company (PG), Verizon Communications Inc. (VZ), The Coca-Cola Company (KO), and General Electric Company (GE) form NYSE. Using a loop, that we retrieve historical price data for each asset from Yahoo Finance and store it in a dataframe portfolioPrices.
+
+```{r}
+tickers <- c("PG", "VZ", "KO", "GE")
+weights <- c(.30, .25, .25, .20)
+```
+
+
+
+```{r, echo=FALSE}
+#Geting Prices
+portfolioPrices <- NULL
+
+for (i in tickers){
+  portfolioPrices <- cbind(portfolioPrices,
+                           getSymbols.yahoo(i, from="2012-01-01", periodicity = "daily",auto.assign=FALSE)[,6])
+}
+```
+
+
+-   **Benchmark Data:** We retrieve benchmark data (in this case, represented by the ETF "IWM") to compare the portfolio performance against, and calculate returns from the benchmark data and handle missing values.
+
+```{r}
+# bench mark
+benchmarkPrices <- getSymbols.yahoo("IWM", from="2012-01-01", periodicity = "daily", auto.assign=FALSE)[,6]
+
+colSums(is.na(benchmarkPrices)) # is there any NA value
+
+benchmarkReturns <- na.omit(ROC(benchmarkPrices, type="discrete"))
+```
+-   **Data Preprocessing:** Then rename the columns of portfolioPrices dataframe with ticker symbols. Check for missing values in the portfolio price data.
+
+```{r}
+#Rename Columns
+colnames(portfolioPrices) <- tickers
+#Get sum of NA per column
+colSums(is.na(portfolioPrices))
+```
+
+# Visualization:
+
+Plot the historical prices of assets in the portfolio using plot() function.
+
+```{r, echo=FALSE}
+#Plot
+plot(portfolioPrices, legend = tickers, main = "Portfolio Prices")
+```
+
+# Return Calculation:
+
+Calculate daily returns for each asset in the portfolio and handle missing values. Calculate the portfolio returns using Return.portfolio() function.
+
+```{r}
+#Calculate Returns For DF
+dailyReturns <- na.omit(ROC(portfolioPrices, type="discrete"))
+
+#Calculate Portfolio Returns
+portfolioReturn <- Return.portfolio(dailyReturns, weights=weights)
+```
+
+# Performance Visualization: 
+
+Plot the cumulative returns of the portfolio using chart.
+
+## CumReturns
+
+```{r, echo=FALSE}
+#Plot Performance
+chart.CumReturns(portfolioReturn)
+```
+
+## PerformanceSummary
+
+```{r, echo=FALSE}
+charts.PerformanceSummary(portfolioReturn)
+```
+
+## Bar
+
+```{r, echo=FALSE}
+chart.Bar(portfolioReturn)
+```
+
+## Boxplot
+
+```{r, echo=FALSE}
+chart.Boxplot(portfolioReturn)
+```
+
+## RollingPerformance
+
+```{r, echo=FALSE}
+charts.RollingPerformance(portfolioReturn)
+```
+
+# Risk Metrics:
+
+Calculate CAPM beta of the portfolio against the benchmark, both in general and during bullish and bearish market conditions.
+
+## Beta
+
+```{r, echo=FALSE}
+#Calculate Metrics 
+CAPM.beta(portfolioReturn, benchmarkReturns, .025/252)
+```
+
+## Beta.bull
+
+```{r, echo=FALSE}
+CAPM.beta.bull(portfolioReturn, benchmarkReturns, .025/252)
+```
+
+## Beta.bear
+
+```{r, echo=FALSE}
+CAPM.beta.bear(portfolioReturn, benchmarkReturns, .025/252)
+```
+
+## Jensen Alpha
+
+Calculate CAPM Jensen's alpha to measure the portfolio's risk-adjusted returns.
+Compute the Sharpe Ratio to assess the portfolio's risk-adjusted returns relative to the risk-free rate.
+
+```{r, echo=FALSE}
+CAPM.jensenAlpha(portfolioReturn, benchmarkReturns, .025/252)
+```
+
+# Performance Metrics:
+
+Generating a table of annualized returns adjusted for risk-free rate. Provide a table of calendar returns.
+
+```{r, echo=FALSE}
+SharpeRatio(portfolioReturn, Rf = .025/252, p = 0.95, FUN = "StdDev",
+            weights = NULL, annualize = FALSE)
+```
+
+Finally, it involve interpreting the visualizations, risk metrics, and performance metrics to draw conclusions about the portfolio's performance and risk characteristics.
+
+```{r, echo=FALSE}
+table.AnnualizedReturns(portfolioReturn, Rf=.025/252, geometric=TRUE)
+```
+
+
+
+```{r, echo=FALSE}
+table.CalendarReturns(portfolioReturn)
+```
+

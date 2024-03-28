@@ -1,0 +1,123 @@
+---
+title: "R Program Visualization Project"
+author: "Md. Zarif Ibtehaj Emon"
+date: "2023-10-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+# Scatterplot
+
+## MTCARS Data
+
+We can see the differences between the Horsepower vs. MPG from mtcars. We found out that the MPG and Horsepower of most cyl is 8 which is more than other cyl.
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+
+#data from mtcars
+data("mtcars")
+
+# Create the Scatterplot
+mtcars_plot <- ggplot(mtcars, aes(x = hp, y = mpg)) +
+  geom_point(aes(color = as.factor(cyl)), shape = "diamond", size = 4) +
+  geom_line(color = "firebrick", linetype = "dotted", lwd = 0.3) +
+  geom_smooth(method = "lm", col = "#EE2C2C", size = 1) + 
+  
+  labs(title = "Horsepower vs. MPG for mtcars",
+       x = "Horsepower",
+       y = "MPG",
+       caption = "Linear Regression Line") +
+  
+  theme_test()
+
+# Set legend labels
+mtcars_plot <- mtcars_plot + scale_color_discrete(name = "cyl")
+
+# Display the plot
+mtcars_plot
+```
+
+# Barplot
+
+## Data from WHO Corona virus (COVID-19) Dashboard
+
+In Bangladesh, many people have been killed by the COVID-19 pandemic. Data from the WHO Corona virus (COVID-19) Dashboard is available from 2020 to 2023. (last updates)
+
+```{r}
+library(ggplot2)
+
+# Data from WHO Corona virus (COVID-19) Dashboard
+data <- data.frame(
+  Year = factor(c(2020, 2021, 2022, 2023)),  # Convert Year to a factor
+  Deaths = c(7559, 20513, 1368, 37))
+
+# Custom colors for the bars
+bar_colors <- c("#EEB4B4", "#7FCAE6", "#B6D7A8", "#FFD700")
+
+# Creating the Barplot
+die <- ggplot(data, aes(x = Year, y = Deaths, fill = Year)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Deaths), vjust = -0.5, size = 4, color = "black") +
+  
+  labs(title = "COVID-19 Deaths",
+    subtitle = "Bangladesh (2020-2023)",
+    x = "Year",
+    y = "Number of Deaths" ) +
+  
+  scale_fill_manual(values = bar_colors) +  # Setting custom colors
+  
+  theme_classic()
+
+# Display the plot
+die
+```
+
+# Animation
+
+## Annual Death in Bangladesh
+
+Using Data from "macrotrends" to calculate the annual death rate in Bangladesh. You can download the CSV file to see Bangladesh's history and forecasted assumption of death.
+
+You can find in this link: (<https://www.macrotrends.net/countries/BGD/bangladesh/death-rate>)
+
+```{r}
+library(gganimate)
+
+# Load data from the CSV file
+data <- read.csv("~/Rstudio/Bangladesh_Death_Rate.csv")
+
+# Create the animated point
+ad <- ggplot(data, aes(x = Year, y = Deaths_per_1000_People)) +
+  geom_point(color = "#F0FFFF", size = 3, alpha = 0.7) + 
+   
+  labs(title = "Annual Deaths",
+    subtitle = "Deaths per 1000 People",
+    x = "Year",
+    y = "Number of Deaths Rate") +
+  
+    transition_states(Year, transition_length = 2, state_length = 1) +
+    shadow_wake(.3) +
+    ease_aes('linear') +
+    
+    theme_minimal()+
+    
+    theme(panel.background = element_rect(fill = "#4d4d4d")) #changing Bacground color
+  
+# Animate the plot
+anim <- animate(ad, nframes = 75)
+
+# Display the animation
+anim
+
+#save animation
+anim_save("Annual_Deaths.gif", anim)
+```
